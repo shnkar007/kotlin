@@ -80,13 +80,14 @@ private class InheritedDefaultMethodsOnClassesLowering(val context: JvmBackendCo
         if (origin != IrDeclarationOrigin.FAKE_OVERRIDE) return null
         parent.let { if (it is IrClass && it.isJvmInterface) return null }
 
+        val implementation = resolveFakeOverride() ?: return null
+
         // Only generate interface delegation for functions immediately inherited from an interface.
         // (Otherwise, delegation will be present in the parent class)
-        if (overriddenSymbols.any { !it.owner.parentAsClass.isInterface && it.owner.modality != Modality.ABSTRACT }) {
+        if (overriddenSymbols.any { !it.owner.parentAsClass.isInterface && it.owner.modality != Modality.ABSTRACT && it.owner.resolveFakeOverride() == implementation }) {
             return null
         }
 
-        val implementation = resolveFakeOverride() ?: return null
         if (!implementation.hasInterfaceParent()
             || Visibilities.isPrivate(implementation.visibility)
             || implementation.isDefinitelyNotDefaultImplsMethod()
